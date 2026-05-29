@@ -1,0 +1,6 @@
+name: resolved-backend-model
+version: 1.0.0
+description: "Captures the resolved backend model from OpenRouter auto-routing responses. Stores it in a session-scoped dict so the status bar can display which model was actually used."
+author: "Nous Research"
+provides_hooks:
+  - post_api_request

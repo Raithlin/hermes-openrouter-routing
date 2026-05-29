@@ -1,0 +1,20 @@
+{
+  "name": "hermes-openrouter-routing",
+  "version": "1.0.0",
+  "description": "OpenRouter smart routing plugin for Hermes — LLM classifier routes simple/complex tasks to appropriate models",
+  "bin": {
+    "hermes-openrouter-routing": "./bin/hermes-openrouter-routing.js"
+  },
+  "keywords": ["hermes", "openrouter", "ai-agent", "smart-routing", "llm"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Raithlin/hermes-openrouter-routing"
+  },
+  "author": "Raithlin",
+  "files": ["bin/", "plugins/", "README.md", "LICENSE"],
+  "dependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
