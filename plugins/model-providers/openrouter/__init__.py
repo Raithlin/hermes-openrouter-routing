@@ -1,17 +1,13 @@
 """OpenRouter provider profile — smart routing, provider preferences,
-reasoning config passthrough, Pareto Code router, requesty auto-cache.
+reasoning config passthrough, Pareto Code router.
 
-All configuration is read directly from ~/.hermes/config.yaml.
-No core file modifications needed.
+Smart routing uses a cheap LLM classifier to route simple tasks to a fast/cheap
+model and complex tasks to a powerful model. Tool-call continuations skip routing.
+Config is read from ~/.hermes/config.yaml on each classification.
 
-Smart routing (openrouter.routing config section):
-  Uses a cheap LLM classifier to route simple tasks to a fast/cheap model
-  and complex tasks to a powerful model. Tool-call continuations skip routing.
-  Config is re-read on each classification, so changes to config.yaml take
-  effect without restarting Hermes.
-
-Requesty auto-cache (extra_body.requesty config section):
-  Reads extra_body.requesty.auto_cache from config and injects into extra_body.
+Also injects Requesty auto-cache when configured (extra_body.requesty.auto_cache).
+This is a separate concern kept here for convenience — it could equally live in
+any provider plugin or a standalone plugin.
 """
 
 from __future__ import annotations
@@ -238,7 +234,7 @@ def _validate_model(model: str) -> bool:
 
 class OpenRouterProfile(ProviderProfile):
     """OpenRouter aggregator — smart routing, provider preferences,
-    reasoning config passthrough, Pareto Code, requesty auto-cache.
+    reasoning config passthrough, Pareto Code, plus Requesty auto-cache.
 
     Zero core file changes: all config read from ~/.hermes/config.yaml,
     messages/base_url captured via prepare_messages/build_extra_body overrides.

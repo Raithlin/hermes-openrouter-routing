@@ -6,28 +6,33 @@
 
 ## What It Does
 
-This package installs two plugins that work together to make OpenRouter usage smarter and more cost-effective:
+This package installs two plugins:
 
-### 1. Smart Routing (OpenRouter Provider Plugin)
+### 1. OpenRouter Smart Routing (Provider Plugin)
 
 Uses a lightweight LLM classifier to analyze each user request and automatically select the best model:
 
-- **Simple tasks** (quick questions, basic code, chat, lookups) → routed to a cheap/fast model like `nvidia/nemotron-3-super-120b-a12b:free`
-- **Complex tasks** (architecture design, debugging, multi-step reasoning, code review, refactoring) → routed to a powerful model like `deepseek/deepseek-v4-pro`
+- **Simple tasks** (quick questions, basic code, chat, lookups) → routed to a cheap/fast model
+- **Complex tasks** (architecture design, debugging, multi-step reasoning, code review, refactoring) → routed to a powerful model
 - **Tool-call continuations** are automatically skipped — no unnecessary re-classification during multi-turn tool usage
 - **Follow-up context awareness** — short responses like "yes" or "go ahead" are classified based on the assistant's previous message context
 
-### 2. Requesty Auto-Cache
+Also injects Requesty auto-cache when configured (`extra_body.requesty.auto_cache`). This is a separate concern kept in the provider plugin for convenience — it could equally live in any provider plugin.
 
-Enables auto-caching for Requesty providers to reduce latency and cost on repeated queries.
-
-### 3. Resolved Backend Model Tracking
+### 2. Resolved Backend Model Tracking (User Plugin)
 
 When OpenRouter's own auto-routing (`openrouter/auto`) selects a different model than requested, this plugin captures and stores the actual model used, making it visible in the Hermes status bar.
 
-### 4. Provider Preferences & Pareto Code
+### Pareto Code Router
 
-Passes through provider preferences and supports the Pareto Code router (`openrouter/pareto-code`) with configurable minimum coding scores.
+The plugin supports the Pareto Code router with configurable minimum coding scores when model is set to `openrouter/pareto-code`:
+
+```yaml
+model: openrouter/pareto-code
+
+openrouter:
+  min_coding_score: 0.65
+```
 
 ## Installation
 
@@ -68,13 +73,15 @@ openrouter:
 | `default_model` | Fallback model if classification fails |
 | `router_model` | The cheap classifier model that decides routing (default: `nvidia/nemotron-3-super-120b-a12b:free`) |
 
-### Auto-Cache Configuration
+### Requesty Auto-Cache
 
 ```yaml
 extra_body:
   requesty:
     auto_cache: true
 ```
+
+This is injected into the API request's `extra_body` by the OpenRouter provider plugin. It works with any provider that supports the Requesty caching protocol.
 
 ### Environment Variable
 
