@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * Hermes OpenRouter Routing — CLI plugin installer
+ * Hermes Task Router — CLI plugin installer
  *
- * Installs/uninstalls OpenRouter smart routing plugins and
- * resolved-backend-model plugin for Hermes.
+ * Provider-agnostic smart task routing for Hermes.
+ * Works with OpenRouter, Requesty, or any provider.
  *
  * Usage:
- *   hermes-openrouter-routing install     Install plugins
- *   hermes-openrouter-routing uninstall   Remove plugins, restore backups
- *   hermes-openrouter-routing status      Check installation status
- *   hermes-openrouter-routing --version   Print version
- *   hermes-openrouter-routing --help      Print usage
+ *   hermes-task-router install     Install plugins
+ *   hermes-task-router uninstall   Remove plugins, restore backups
+ *   hermes-task-router status      Check installation status
+ *   hermes-task-router --version   Print version
+ *   hermes-task-router --help      Print usage
  */
 'use strict';
 
@@ -18,8 +18,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const PKG_VERSION = '1.0.0';
-const PKG_NAME = 'hermes-openrouter-routing';
+const PKG_VERSION = '1.0.2';
+const PKG_NAME = 'hermes-task-router';
 
 // ── Color helpers ───────────────────────────────────────────────────
 const COLORS = {
@@ -106,7 +106,7 @@ function install() {
   let skipped = 0;
   let backedUp = 0;
 
-  console.log(bold('Installing OpenRouter routing plugins...\n'));
+  console.log(bold('Installing task router plugins...\n'));
 
   for (const entry of entries) {
     // Ensure source exists
@@ -183,7 +183,7 @@ function uninstall() {
   let removed = 0;
   let restored = 0;
 
-  console.log(bold('Removing OpenRouter routing plugins...\n'));
+  console.log(bold('Removing task router plugins...\n'));
 
   for (const entry of entries) {
     // Remove the installed file
@@ -296,7 +296,7 @@ function status() {
   if (installedCount === entries.length) {
     console.log(green(bold('✓ All plugins are installed.')));
   } else {
-    console.log(yellow('⚠ Some plugins are missing. Run "' + bold('hermes-openrouter-routing install') + '" to install.'));
+    console.log(yellow('⚠ Some plugins are missing. Run "' + bold('hermes-task-router install') + '" to install.'));
   }
 }
 
@@ -306,11 +306,11 @@ function printHelp() {
   console.log('  OpenRouter smart routing plugin installer for Hermes.');
   console.log('');
   console.log(bold('Usage:'));
-  console.log('  ' + cyan('hermes-openrouter-routing install') + '      Install OpenRouter routing plugins');
-  console.log('  ' + cyan('hermes-openrouter-routing uninstall') + '    Remove plugins and restore backups');
-  console.log('  ' + cyan('hermes-openrouter-routing status') + '       Check installation status');
-  console.log('  ' + cyan('hermes-openrouter-routing --version') + '    Print version');
-  console.log('  ' + cyan('hermes-openrouter-routing --help') + '       Show this help');
+  console.log('  ' + cyan('hermes-task-router install') + '      Install task router plugins');
+  console.log('  ' + cyan('hermes-task-router uninstall') + '    Remove plugins and restore backups');
+  console.log('  ' + cyan('hermes-task-router status') + '       Check installation status');
+  console.log('  ' + cyan('hermes-task-router --version') + '    Print version');
+  console.log('  ' + cyan('hermes-task-router --help') + '       Show this help');
   console.log('');
   console.log(bold('What it does:'));
   console.log('  1. Installs the OpenRouter model provider plugin with smart routing');
@@ -320,10 +320,10 @@ function printHelp() {
   console.log('  4. Tool-call continuations skip routing');
   console.log('');
   console.log(bold('Configuration:'));
-  console.log('  See README.md or run "hermes-openrouter-routing install" for config examples.');
+  console.log('  See README.md or run "hermes-task-router install" for config examples.');
   console.log('');
   console.log(bold('Repository:'));
-  console.log('  https://github.com/Raithlin/hermes-openrouter-routing');
+  console.log('  https://github.com/Raithlin/hermes-task-router');
 }
 
 // ── Main ────────────────────────────────────────────────────────────
@@ -358,7 +358,7 @@ function main() {
       break;
     default:
       console.error(red('Unknown command: ' + cmd));
-      console.error('Run "' + cyan('hermes-openrouter-routing --help') + '" for usage.');
+      console.error('Run "' + cyan('hermes-task-router --help') + '" for usage.');
       process.exit(1);
   }
 }

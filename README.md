@@ -1,31 +1,99 @@
-# Hermes OpenRouter Routing
+# Hermes Task Router
 
-**Smart routing plugin pack for [Hermes Agent](https://github.com/NousResearch/hermes-agent) — automatically classifies tasks and routes them to the optimal OpenRouter model.**
+**Provider-agnostic smart task routing for Hermes** — uses an LLM classifier to route simple tasks to fast/cheap models and complex tasks to powerful models. Works with [OpenRouter](https://openrouter.ai), [Requesty](https://requesty.ai), or any Hermes provider.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## What It Does
 
-This package installs two plugins:
+### Smart Task Routing
 
-### 1. OpenRouter Smart Routing (Provider Plugin)
+Every new user message is classified as "simple" or "complex" by a cheap router model:
 
-Uses a lightweight LLM classifier to analyze each user request and automatically select the best model:
+- **Simple tasks** (quick questions, basic code, chat, lookups) → routed to your `simple_model`
+- **Complex tasks** (architecture design, debugging, multi-step reasoning, code review) → routed to your `complex_model`
+- **Tool-call continuations** skip routing — no unnecessary re-classification during multi-turn tool usage
+- **Follow-up context awareness** — short responses like "yes" or "go ahead" use the assistant's previous message for classification context
 
-- **Simple tasks** (quick questions, basic code, chat, lookups) → routed to a cheap/fast model
-- **Complex tasks** (architecture design, debugging, multi-step reasoning, code review, refactoring) → routed to a powerful model
-- **Tool-call continuations** are automatically skipped — no unnecessary re-classification during multi-turn tool usage
-- **Follow-up context awareness** — short responses like "yes" or "go ahead" are classified based on the assistant's previous message context
+### Requesty Auto-Cache
 
-Also injects Requesty auto-cache when configured (`extra_body.requesty.auto_cache`). This is a separate concern kept in the provider plugin for convenience — it could equally live in any provider plugin.
+Enables `auto_cache` for Requesty providers to reduce latency on repeated queries.
 
-### 2. Resolved Backend Model Tracking (User Plugin)
+### Resolved Backend Model Tracking
 
-When OpenRouter's own auto-routing (`openrouter/auto`) selects a different model than requested, this plugin captures and stores the actual model used, making it visible in the Hermes status bar.
+When a provider's auto-routing selects a different model than requested, the actual model used is captured and stored for display in the status bar.
 
-### Pareto Code Router
+## Installation
 
-The plugin supports the Pareto Code router with configurable minimum coding scores when model is set to `openrouter/pareto-code`:
+```bash
+npx hermes-task-router install
+```
+
+Or globally:
+
+```bash
+npm install -g hermes-task-router
+hermes-task-router install
+```
+
+Then add the required configuration (see below) and restart the gateway:
+
+```bash
+hermes gateway restart
+```
+
+## Configuration
+
+All configuration lives in `~/.hermes/config.yaml`.
+
+### Required: Smart Routing
+
+```yaml
+openrouter:          # Or your provider's config block
+  routing:
+    enabled: true
+    simple_model: "nvidia/nemotron-3-super-120b-a12b:free"
+    complex_model: "deepseek/deepseek-v4-pro"
+    default_model: "nvidia/nemotron-3-super-120b:a12b"
+    router_model: "nvidia/nemotron-3-super-120b-a12b:free"
+```
+
+| Key | Required | Description |
+|-----|----------|-------------|
+| `enabled` | Yes | Enable smart routing |
+| `simple_model` | Yes | Model for simple/cheap tasks |
+| `complex_model` | Yes | Model for complex tasks |
+| `default_model` | No | Fallback if classification fails |
+| `router_model` | No | Classifier model (default: `nvidia/nemotron-3-super-120b-a12b:free`) |
+
+### Optional: Requesty Auto-Cache
+
+```yaml
+extra_body:
+  requesty:
+    auto_cache: true
+```
+
+### Optional: OpenRouter Auto-Router (NotDiamond)
+
+To use OpenRouter's built-in auto-router instead of the local classifier, set `model: openrouter/auto`. Local smart routing is automatically skipped.
+
+```yaml
+model: openrouter/auto
+
+provider_preferences:
+  plugins:
+    - id: auto-router
+      allowed_models:
+        - nvidia/nemotron-3-super-120b:a12b:free
+        - deepseek/deepseek-v4-flash
+        - deepseek/deepseek-v4-pro
+        - anthropic/claude-sonnet-4
+```
+
+### Optional: Pareto Code Router
+
+When model is set to `openrouter/pareto-code`:
 
 ```yaml
 model: openrouter/pareto-code
@@ -34,139 +102,41 @@ openrouter:
   min_coding_score: 0.65
 ```
 
-## Installation
+## How It Works
 
-### Via npx (recommended)
+1. **User sends a message** → Hermes processes it through the provider
+2. **Classifier runs** → A cheap router model classifies the task as `simple` or `complex`
+3. **Model is selected** → The appropriate model from your config is chosen
+4. **API call proceeds** → The selected model handles the request
+5. **Tool continuations skip** → Multi-tool sessions keep the selected model without re-classifying
 
-```bash
-npx hermes-openrouter-routing install
-```
+On classification failure (network error, timeout, unexpected response), the current model is kept and the failure is logged at debug level.
 
-### Via global install
+## Requirements
 
-```bash
-npm install -g hermes-openrouter-routing
-hermes-openrouter-routing install
-```
-
-## Configuration
-
-After installing, add the following to `~/.hermes/config.yaml`:
-
-### Smart Routing Configuration
-
-```yaml
-openrouter:
-  routing:
-    enabled: true
-    simple_model: "nvidia/nemotron-3-super-120b-a12b:free"
-    complex_model: "deepseek/deepseek-v4-pro"
-    default_model: "nvidia/nemotron-3-super-120b-a12b"
-    router_model: "nvidia/nemotron-3-super-120b-a12b:free"
-```
-
-| Key | Description |
-|-----|-------------|
-| `enabled` | Set to `true` to enable smart routing |
-| `simple_model` | Model used for simple/cheap tasks |
-| `complex_model` | Model used for complex tasks |
-| `default_model` | Fallback model if classification fails |
-| `router_model` | The cheap classifier model that decides routing (default: `nvidia/nemotron-3-super-120b-a12b:free`) |
-
-### Requesty Auto-Cache
-
-```yaml
-extra_body:
-  requesty:
-    auto_cache: true
-```
-
-This is injected into the API request's `extra_body` by the OpenRouter provider plugin. It works with any provider that supports the Requesty caching protocol.
-
-### Environment Variable
-
-Make sure `OPENROUTER_API_KEY` is set in `~/.hermes/.env` or in your environment:
-
-```bash
-echo 'OPENROUTER_API_KEY=sk-or-v1-...' >> ~/.hermes/.env
-```
-
-### Example Full Config
-
-```yaml
-# ~/.hermes/config.yaml
-
-default_model: openrouter/auto
-
-openrouter:
-  routing:
-    enabled: true
-    simple_model: "nvidia/nemotron-3-super-120b-a12b:free"
-    complex_model: "deepseek/deepseek-v4-pro"
-    default_model: "nvidia/nemotron-3-super-120b-a12b"
-    router_model: "nvidia/nemotron-3-super-120b-a12b:free"
-
-extra_body:
-  requesty:
-    auto_cache: true
-```
-
-## How Smart Routing Works
-
-1. **User sends a message** → Hermes processes it through the OpenRouter provider
-2. **Classifier runs** → A cheap router model (e.g., `nvidia/nemotron-3-super-120b-a12b:free`) classifies the task as `simple` or `complex`
-3. **Model selected** → The appropriate model from `simple_model` or `complex_model` config is chosen
-4. **Tool continuations skip routing** → If the assistant starts calling tools, subsequent iterations reuse the selected model without re-classifying
-5. **Follow-up context** → Short follow-ups like "yes" or "do it" use the assistant's last response to determine context complexity
+- **Hermes Agent >= 0.15.0**
+- **OpenRouter API key** (`OPENROUTER_API_KEY` env var, for smart routing classifier)
+- **Node.js >= 16.0.0** (for the CLI installer)
 
 ## Commands
 
 ```bash
-hermes-openrouter-routing install       # Install plugins
-hermes-openrouter-routing uninstall     # Remove plugins, restore backups
-hermes-openrouter-routing status        # Check installation status
-hermes-openrouter-routing --version     # Print version
-hermes-openrouter-routing --help        # Show usage
+hermes-task-router install       # Install plugins (backs up existing files)
+hermes-task-router uninstall     # Remove plugins, restore backups
+hermes-task-router status        # Check installation status
+hermes-task-router --version     # Print version
+hermes-task-router --help        # Show usage
 ```
 
-## Uninstall
+## Compatibility
 
-```bash
-hermes-openrouter-routing uninstall
-```
-
-Or remove the manually:
-
-```bash
-rm -rf ~/.hermes/hermes-agent/plugins/model-providers/openrouter
-rm -rf ~/.hermes/plugins/resolved-backend-model
-```
-
-The `uninstall` command also restores any automatic backups that were created during installation.
-
-## Requirements
-
-- **Hermes Agent >= 0.15.0** — the provider plugin system and hook registration features
-- **Node.js >= 16.0.0** — for the CLI installer
-- **OpenRouter API key** (`OPENROUTER_API_KEY`) — required for model access
-- **Python 3.10+** — for the Python plugin files
-
-## Package Contents
+Zero core files are modified. The plugin overrides the bundled OpenRouter provider by living at the canonical path:
 
 ```
-hermes-openrouter-routing/
-├── bin/hermes-openrouter-routing.js     # CLI installer (Node.js)
-├── plugins/
-│   ├── model-providers/openrouter/      # OpenRouter provider with smart routing
-│   │   ├── __init__.py                  # Provider profile (classifier, routing)
-│   │   └── plugin.yaml                  # Plugin metadata
-│   └── user/resolved-backend-model/     # Resolved model tracker
-│       ├── __init__.py                  # Hook for capturing resolved models
-│       └── plugin.yaml                  # Plugin metadata
-├── package.json
-├── README.md
-└── LICENSE (MIT)
+~/.hermes/hermes-agent/plugins/model-providers/openrouter/__init__.py
 ```
+
+Survives `hermes update` as long as upstream doesn't change the `ProviderProfile` base class method signatures.
 
 ## License
 

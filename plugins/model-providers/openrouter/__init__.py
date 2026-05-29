@@ -1,13 +1,12 @@
-"""OpenRouter provider profile — smart routing, provider preferences,
+"""OpenRouter provider profile — smart task routing, provider preferences,
 reasoning config passthrough, Pareto Code router.
 
-Smart routing uses a cheap LLM classifier to route simple tasks to a fast/cheap
-model and complex tasks to a powerful model. Tool-call continuations skip routing.
-Config is read from ~/.hermes/config.yaml on each classification.
+Smart task routing uses a cheap LLM classifier to route simple tasks to a
+fast/cheap model and complex tasks to a powerful model. Provider-agnostic —
+works with OpenRouter, Requesty, or any Hermes provider.
 
 Also injects Requesty auto-cache when configured (extra_body.requesty.auto_cache).
-This is a separate concern kept here for convenience — it could equally live in
-any provider plugin or a standalone plugin.
+Config is read from ~/.hermes/config.yaml on each classification.
 """
 
 from __future__ import annotations
@@ -233,11 +232,13 @@ def _validate_model(model: str) -> bool:
 # ── Provider profile ───────────────────────────────────────────────────
 
 class OpenRouterProfile(ProviderProfile):
-    """OpenRouter aggregator — smart routing, provider preferences,
-    reasoning config passthrough, Pareto Code, plus Requesty auto-cache.
+    """OpenRouter provider with smart task routing.
 
+    Provider-agnostic classifier routes simple/cheap to complex/powerful models.
     Zero core file changes: all config read from ~/.hermes/config.yaml,
     messages/base_url captured via prepare_messages/build_extra_body overrides.
+
+    Also injects Requesty auto-cache when configured.
     """
 
     def __init__(self, **kwargs):
