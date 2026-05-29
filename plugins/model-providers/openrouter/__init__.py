@@ -2,11 +2,12 @@
 reasoning config passthrough, Pareto Code router.
 
 Smart task routing uses a cheap LLM classifier to route simple tasks to a
-fast/cheap model and complex tasks to a powerful model. Provider-agnostic —
-works with OpenRouter, Requesty, or any Hermes provider.
+fast/cheap model and complex tasks to a powerful model. This override of the
+bundled OpenRouter provider adds routing intelligence — when OpenRouter is
+the active provider, every new user message is classified and routed.
 
 Also injects Requesty auto-cache when configured (extra_body.requesty.auto_cache).
-Config is read from ~/.hermes/config.yaml on each classification.
+Config is re-read from ~/.hermes/config.yaml on each classification.
 """
 
 from __future__ import annotations
@@ -234,9 +235,9 @@ def _validate_model(model: str) -> bool:
 class OpenRouterProfile(ProviderProfile):
     """OpenRouter provider with smart task routing.
 
-    Provider-agnostic classifier routes simple/cheap to complex/powerful models.
+    Routes simple/cheap to complex/powerful models using an LLM classifier.
     Zero core file changes: all config read from ~/.hermes/config.yaml,
-    messages/base_url captured via prepare_messages/build_extra_body overrides.
+    messages/base_url captured via prepare_messages/build_extra_body.
 
     Also injects Requesty auto-cache when configured.
     """

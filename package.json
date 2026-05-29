@@ -1,15 +1,15 @@
 {
-  "name": "hermes-task-router",
-  "version": "1.0.2",
-  "description": "Provider-agnostic smart task routing for Hermes — LLM classifier routes simple/complex tasks to appropriate models. Works with OpenRouter, Requesty, or any provider.",
+  "name": "hermes-openrouter-routing",
+  "version": "1.1.0",
+  "description": "OpenRouter smart routing plugin for Hermes — LLM classifier routes simple/complex tasks to appropriate models. Also injects Requesty auto-cache when configured.",
   "bin": {
-    "hermes-task-router": "./bin/hermes-task-router.js"
+    "hermes-openrouter-routing": "./bin/hermes-openrouter-routing.js"
   },
-  "keywords": ["hermes", "openrouter", "requesty", "ai-agent", "smart-routing", "llm", "task-router"],
+  "keywords": ["hermes", "openrouter", "requesty", "ai-agent", "smart-routing", "llm"],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Raithlin/hermes-task-router"
+    "url": "https://github.com/Raithlin/hermes-openrouter-routing"
   },
   "author": "Raithlin",
   "files": ["bin/", "plugins/", "README.md", "LICENSE"],
